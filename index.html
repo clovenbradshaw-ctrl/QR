@@ -1654,7 +1654,7 @@
             const protectedFields = state.fields.filter(f => f.protected && (f.value || f.medications?.length > 0));
 
             let data;
-            
+
             if (state.compressed) {
                 data = {
                     v: 1,
@@ -1675,33 +1675,37 @@
                     data.enc = encryptedData;
                 }
             } else {
-                data = {
-                    version: "1.0",
-                    template: state.selectedTemplate,
-                    theme: state.selectedTheme,
-                    fields: publicFields.map(f => ({
-                        key: f.key,
-                        label: f.label,
-                        value: f.medications || f.value,
-                        type: f.type
-                    }))
-                };
-                
                 if (protectedFields.length > 0) {
-                    if (!state.protectionPassword) {
-                        alert('Error: Password not set for protected fields.');
-                        return;
-                    }
-                    const encryptedData = await encryptFields(protectedFields, state.protectionPassword);
-                    data.protected = encryptedData;
+                    alert('Simple Code mode cannot include password-protected fields. Please remove protection or switch to Smart Code.');
+                    return;
                 }
+
+                const lines = [];
+                lines.push('Personal QR Code Information');
+                lines.push('-----------------------------');
+                publicFields.forEach(field => {
+                    const value = formatPlainTextValue(field);
+                    if (!value) return;
+                    if (value.includes('\n')) {
+                        lines.push(`${field.label}:`);
+                        value.split('\n').forEach(line => {
+                            lines.push(`  ${line}`);
+                        });
+                    } else {
+                        lines.push(`${field.label}: ${value}`);
+                    }
+                });
+
+                const plainText = lines.join('\n');
+                displayQRCode(plainText, plainText.length, false);
+                return;
             }
 
             const jsonString = JSON.stringify(data);
             const encoded = btoa(jsonString);
             const url = `${window.location.origin}${window.location.pathname}#${encoded}`;
 
-            displayQRCode(url, jsonString.length);
+            displayQRCode(url, jsonString.length, true);
         }
 
         async function encryptFields(fields, password) {
@@ -1723,13 +1727,13 @@
             return btoa(String.fromCharCode(...combined));
         }
 
-        function displayQRCode(url, dataSize) {
+        function displayQRCode(content, dataSize, isUrl = true) {
             const output = document.getElementById('qrOutput');
             const qrcodeDiv = document.getElementById('qrcode');
             qrcodeDiv.innerHTML = '';
-            
+
             new QRCode(qrcodeDiv, {
-                text: url,
+                text: content,
                 width: 300,
                 height: 300,
                 colorDark: "#000000",
@@ -1737,10 +1741,35 @@
                 correctLevel: QRCode.CorrectLevel.M
             });
 
-            document.getElementById('dataSize').textContent = `Data size: ${dataSize} bytes`;
+            const dataSizeElement = document.getElementById('dataSize');
+            if (isUrl) {
+                dataSizeElement.textContent = `Data size: ${dataSize} bytes (requires this website to view full details)`;
+            } else {
+                dataSizeElement.textContent = `Data size: ${dataSize} characters (plain text readable in any QR scanner)`;
+            }
             output.classList.remove('hidden');
             output.scrollIntoView({ behavior: 'smooth' });
-            window.currentQRUrl = url;
+            window.currentQRContent = content;
+        }
+
+        function formatPlainTextValue(field) {
+            if (field.medications && field.medications.length > 0) {
+                return field.medications.map(med => {
+                    const parts = [];
+                    if (med.brand || med.generic) parts.push(med.brand || med.generic);
+                    if (med.dosage) parts.push(`Dosage: ${med.dosage}`);
+                    if (med.frequency) parts.push(`Frequency: ${med.frequency}`);
+                    return `- ${parts.join(' | ')}`;
+                }).join('\n');
+            }
+
+            if (!field.value) return '';
+
+            if (Array.isArray(field.value)) {
+                return field.value.join(', ');
+            }
+
+            return field.value;
         }
 
         function downloadQR() {
