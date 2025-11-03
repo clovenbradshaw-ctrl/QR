@@ -76,8 +76,10 @@
             text-align: center;
             position: relative;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
         }
-        
+
         .hero::before {
             content: '';
             position: absolute;
@@ -88,47 +90,180 @@
             background: rgba(255,255,255,0.05);
             border-radius: 50%;
         }
-        
+
+        .hero.has-data {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            color: var(--text-dark);
+        }
+
+        .hero.has-data::before {
+            opacity: 0;
+        }
+
         .hero-content {
-            max-width: 1200px;
+            max-width: 960px;
+            width: 100%;
             margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 48px;
-            align-items: center;
             position: relative;
             z-index: 1;
         }
-        
-        .hero-text {
-            text-align: left;
+
+        .hero-details {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+            text-align: center;
+            color: white;
         }
-        
-        .hero h1 {
+
+        .hero-details h1 {
             font-size: 2.75rem;
             font-weight: 700;
-            color: white;
-            margin-bottom: 16px;
             line-height: 1.2;
         }
-        
-        .hero p {
+
+        .hero-details p {
             font-size: 1.25rem;
+            max-width: 720px;
             color: rgba(255,255,255,0.9);
-            margin-bottom: 24px;
         }
-        
-        .hero-image {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+
+        .hero.has-data .hero-details {
+            background: var(--bg-primary);
+            color: var(--text-dark);
+            text-align: left;
+            align-items: flex-start;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            gap: 24px;
         }
-        
-        .hero-image img {
-            max-width: 400px;
+
+        .hero.has-data .hero-details h1,
+        .hero.has-data .hero-details p {
+            color: var(--text-dark);
+        }
+
+        .hero-fields {
             width: 100%;
-            height: auto;
-            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.2));
+            display: none;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .hero.has-data .hero-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+
+        .hero-field {
+            background: var(--bg-secondary);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hero-field-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-medium);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .hero-field-label span:first-child {
+            font-size: 1.2rem;
+        }
+
+        .hero-field-value {
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            word-break: break-word;
+        }
+
+        .hero-field-value a {
+            color: var(--primary);
+        }
+
+        body.theme-dark .hero.has-data {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        body.theme-dark .hero.has-data .hero-details {
+            background: #111827;
+            box-shadow: none;
+        }
+
+        body.theme-dark .hero-field {
+            background: #0f172a;
+        }
+
+        body.theme-dark .hero-field-label {
+            color: var(--text-light);
+        }
+
+        .brand-card {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+
+        .brand-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .brand-subtitle {
+            font-size: 1.05rem;
+            color: var(--text-medium);
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        body.theme-dark .brand-card {
+            background: #1f2937;
+            box-shadow: none;
+        }
+
+        body.theme-dark .brand-subtitle {
+            color: var(--text-light);
+        }
+
+        .decoded-cta {
+            margin-top: 24px;
+            padding: 24px;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-light);
+            text-align: center;
+        }
+
+        .decoded-cta h3 {
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .decoded-cta p {
+            color: var(--text-medium);
+            margin-bottom: 16px;
+        }
+
+        .decoded-cta .btn {
+            padding: 12px 28px;
+        }
+
+        body.theme-dark .decoded-cta {
+            background: #1f2937;
+            border-color: #334155;
         }
         
         .container {
@@ -803,31 +938,26 @@
         
         /* Responsive */
         @media (max-width: 768px) {
-            .hero-content {
+            .hero-details h1 {
+                font-size: 2.1rem;
+            }
+
+            .hero-details p {
+                font-size: 1.05rem;
+            }
+
+            .hero.has-data .hero-details {
+                padding: 24px;
+            }
+
+            .hero.has-data .hero-fields {
                 grid-template-columns: 1fr;
-                gap: 24px;
             }
-            
-            .hero-text {
-                text-align: center;
-            }
-            
-            .hero h1 {
-                font-size: 2rem;
-            }
-            
-            .hero p {
-                font-size: 1.1rem;
-            }
-            
-            .hero-image img {
-                max-width: 300px;
-            }
-            
+
             .container {
                 padding: 0 16px;
             }
-            
+
             .card {
                 padding: 24px 20px;
             }
@@ -859,24 +989,27 @@
 </head>
 <body class="theme-modern">
     <!-- Hero Section -->
-    <div class="hero">
+    <div class="hero" id="hero">
         <div class="hero-content">
-            <div class="hero-text">
-                <h1>Personal QR Code Maker</h1>
-                <p>Create secure, scannable codes for contact info, medical alerts, and more</p>
-            </div>
-            <div class="hero-image">
-                <img src="https://storage.googleapis.com/art_homelessness/1.png" alt="QR Code Backpack" />
+            <div class="hero-details" id="heroDetails">
+                <h1 id="heroTitle">Scan a QR to view shared details</h1>
+                <p id="heroSubtitle">Use the camera scanner below or open a QR link to instantly load someone's saved information.</p>
+                <div id="heroFields" class="hero-fields hidden"></div>
             </div>
         </div>
     </div>
 
     <div class="container">
+        <div class="brand-card">
+            <h2 class="brand-title">Personal QR Code Maker</h2>
+            <p class="brand-subtitle">Design a code that keeps your most important information ready to share — from emergency contacts to social profiles — and update it anytime.</p>
+        </div>
+
         <!-- Mode Selector -->
         <div class="mode-selector">
             <button class="mode-btn active" data-mode="create">
                 <span class="mode-icon">✏️</span>
-                <span class="mode-label">Make a Code</span>
+                <span class="mode-label">Make a QR</span>
             </button>
             <button class="mode-btn" data-mode="view">
                 <span class="mode-icon">👁️</span>
@@ -1169,6 +1302,7 @@
             initializeThemeSelector();
             initializeEventListeners();
             loadDefaultTemplate();
+            setHeroDefault();
             checkURLForData();
             updateProgress();
         });
@@ -1270,6 +1404,49 @@
                 state.showIdentityFields = e.target.checked;
                 localStorage.setItem('qr-show-identity-fields', e.target.checked);
             });
+        }
+
+        function setHeroDefault() {
+            const hero = document.getElementById('hero');
+            const heroTitle = document.getElementById('heroTitle');
+            const heroSubtitle = document.getElementById('heroSubtitle');
+            const heroFields = document.getElementById('heroFields');
+
+            if (!hero || !heroTitle || !heroSubtitle || !heroFields) return;
+
+            hero.classList.remove('has-data');
+            heroTitle.textContent = 'Scan a QR to view shared details';
+            heroSubtitle.textContent = "Use the camera scanner below or open a QR link to instantly load someone's saved information.";
+            heroFields.innerHTML = '';
+            heroFields.classList.add('hidden');
+        }
+
+        function updateHeroWithFields(fields) {
+            const hero = document.getElementById('hero');
+            const heroTitle = document.getElementById('heroTitle');
+            const heroSubtitle = document.getElementById('heroSubtitle');
+            const heroFields = document.getElementById('heroFields');
+
+            if (!hero || !heroTitle || !heroSubtitle || !heroFields) return;
+
+            hero.classList.add('has-data');
+            heroTitle.textContent = 'Shared QR details';
+            heroSubtitle.textContent = 'Here’s what this QR wants you to know:';
+
+            const fieldsHtml = fields.map(field => `
+                <div class="hero-field">
+                    <div class="hero-field-label">
+                        <span>${field.icon || '📝'}</span>
+                        <span>${field.label}</span>
+                    </div>
+                    <div class="hero-field-value">${getFieldValueHtml(field)}</div>
+                </div>
+            `).join('');
+
+            heroFields.innerHTML = fieldsHtml;
+            heroFields.classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function updateProgress() {
@@ -1766,6 +1943,19 @@
             }
         }
 
+        function getFieldValueHtml(field) {
+            if (Array.isArray(field.value)) {
+                return field.value.map(med =>
+                    `<div style="margin-bottom: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                        <strong>${med.brand || med.generic}</strong><br>
+                        ${med.dosage ? `<span style='color: var(--text-medium);'>Dosage: ${med.dosage}</span><br>` : ''}
+                        ${med.frequency ? `<span style='color: var(--text-medium);'>Frequency: ${med.frequency}</span>` : ''}
+                    </div>`
+                ).join('');
+            }
+            return formatFieldValue(field);
+        }
+
         function displayDecodedData(data) {
             const container = document.getElementById('decodedData');
             container.innerHTML = '';
@@ -1788,37 +1978,13 @@
                 fields = data.fields;
             }
 
-            const fieldsHtml = fields.map(field => {
-                let valueHtml = '';
-                if (Array.isArray(field.value)) {
-                    valueHtml = field.value.map(med => 
-                        `<div style="margin-bottom: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
-                            <strong>${med.brand || med.generic}</strong><br>
-                            ${med.dosage ? `<span style="color: var(--text-medium);">Dosage: ${med.dosage}</span><br>` : ''}
-                            ${med.frequency ? `<span style="color: var(--text-medium);">Frequency: ${med.frequency}</span>` : ''}
-                        </div>`
-                    ).join('');
-                } else {
-                    valueHtml = formatFieldValue(field);
-                }
-                
-                return `
-                    <div class="field-item" style="margin-bottom: 16px;">
-                        <div class="field-label" style="margin-bottom: 8px;">
-                            <span class="field-icon">${field.icon}</span>
-                            <span style="color: var(--text-medium); font-size: 0.9rem;">${field.label}</span>
-                        </div>
-                        <div style="font-size: 1.1rem; color: var(--text-dark);">${valueHtml}</div>
-                    </div>
-                `;
-            }).join('');
+            updateHeroWithFields(fields);
 
             container.innerHTML = `
-                <div class="card" style="margin-top: 24px;">
-                    <div class="card-header">
-                        <h2 class="card-title">Decoded Information</h2>
-                    </div>
-                    ${fieldsHtml}
+                <div class="decoded-cta">
+                    <h3>Make your own QR</h3>
+                    <p>Keep important details at the ready. Use the builder below to create a personalized QR with your information.</p>
+                    <a class="btn btn-outline" href="#createMode">Make a QR</a>
                 </div>
             `;
         }
