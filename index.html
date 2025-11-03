@@ -39,20 +39,79 @@
             --border-light: #3A4556;
         }
         
-        /* Ensure checkbox is visible in dark theme */
-        body.theme-dark #identityFieldsToggle {
-            background: white;
-            border: 2px solid #9C27B0;
+        /* Identity toggle */
+        .identity-toggle-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-primary);
+            color: var(--text-medium);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            user-select: none;
         }
-        
-        /* Dark theme toggle container */
-        body.theme-dark .card-header > div[style*="background: #F3E5F5"] {
-            background: rgba(156, 39, 176, 0.2) !important;
-            border-color: #9C27B0 !important;
+
+        .identity-toggle-control input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: #7B1FA2;
+            flex-shrink: 0;
         }
-        
-        body.theme-dark .card-header label[for="identityFieldsToggle"] {
-            color: #CE93D8 !important;
+
+        .identity-toggle-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .identity-toggle-title {
+            font-weight: 600;
+            color: var(--text-medium);
+            letter-spacing: 0.2px;
+        }
+
+        .identity-toggle-control.active {
+            border-color: #9C27B0;
+            background: rgba(156, 39, 176, 0.08);
+            color: #7B1FA2;
+        }
+
+        .identity-toggle-control.active .identity-toggle-title {
+            color: #7B1FA2;
+        }
+
+        .identity-toggle-hint {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        body.theme-dark .identity-toggle-control {
+            background: rgba(156, 39, 176, 0.12);
+            border-color: rgba(156, 39, 176, 0.4);
+            box-shadow: none;
+        }
+
+        body.theme-dark .identity-toggle-control.active {
+            background: rgba(156, 39, 176, 0.2);
+        }
+
+        body.theme-dark .identity-toggle-title,
+        body.theme-dark .identity-toggle-hint {
+            color: #CE93D8;
+        }
+
+        body.theme-dark .identity-toggle-control.active .identity-toggle-title {
+            color: #F3E5F5;
+        }
+
+        body.theme-dark .identity-toggle-control.active .identity-toggle-hint {
+            color: #E1BEE7;
         }
         
         body.theme-medical {
@@ -1101,12 +1160,13 @@
                         <h2 class="card-title" style="margin-bottom: 8px;">Add Your Information</h2>
                         <p class="card-subtitle" style="margin: 0;">Fill in the details you want to share</p>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #F3E5F5; border: 2px solid #9C27B0; border-radius: 8px; flex-shrink: 0;">
-                        <input type="checkbox" id="identityFieldsToggle" style="width: 20px; height: 20px; cursor: pointer; margin: 0; flex-shrink: 0;">
-                        <label for="identityFieldsToggle" style="margin: 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #7B1FA2; white-space: nowrap; user-select: none;">
-                            Show identity options (preferred name, pronouns, gender identity)
-                        </label>
-                    </div>
+                    <label class="identity-toggle-control" id="identityToggleControl">
+                        <input type="checkbox" id="identityFieldsToggle">
+                        <div class="identity-toggle-text">
+                            <span class="identity-toggle-title">Identity fields</span>
+                            <span class="identity-toggle-hint" id="identityToggleHint">Hidden (not included in QR).</span>
+                        </div>
+                    </label>
                 </div>
                 
                 <div class="field-list" id="fieldList"></div>
@@ -1294,6 +1354,7 @@
             protectionPassword: null,
             hasProtectedFields: false,
             showIdentityFields: false,
+            hiddenIdentityFields: [],
             currentStep: 1
         };
 
@@ -1303,6 +1364,7 @@
             initializeThemeSelector();
             initializeEventListeners();
             loadDefaultTemplate();
+            enforceIdentityFieldVisibility();
             setHeroDefault();
             checkURLForData();
             updateProgress();
@@ -1377,34 +1439,95 @@
             
             // Identity fields toggle
             const identityToggle = document.getElementById('identityFieldsToggle');
-            
-            // Check for debug mode (URL parameter)
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('reset') === 'true') {
-                localStorage.removeItem('qr-show-identity-fields');
-                console.log('🔄 Reset: Cleared identity toggle preference');
+
+            if (identityToggle) {
+                // Check for debug mode (URL parameter)
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('reset') === 'true') {
+                    localStorage.removeItem('qr-show-identity-fields');
+                    console.log('🔄 Reset: Cleared identity toggle preference');
+                }
+
+                // Load identity fields preference - default to FALSE (unchecked)
+                const savedPreference = localStorage.getItem('qr-show-identity-fields');
+                console.log('💾 Saved preference:', savedPreference);
+
+                if (savedPreference !== null) {
+                    state.showIdentityFields = savedPreference === 'true';
+                } else {
+                    state.showIdentityFields = false; // Default to unchecked
+                }
+
+                // Set checkbox to match state
+                identityToggle.checked = state.showIdentityFields;
+                console.log('🏁 Initial identity toggle state:', state.showIdentityFields, 'checkbox:', identityToggle.checked);
+
+                // Add change listener
+                identityToggle.addEventListener('change', (e) => {
+                    console.log('🔄 Identity toggle changed:', e.target.checked);
+                    state.showIdentityFields = e.target.checked;
+                    localStorage.setItem('qr-show-identity-fields', e.target.checked ? 'true' : 'false');
+                    enforceIdentityFieldVisibility();
+                });
             }
-            
-            // Load identity fields preference - default to FALSE (unchecked)
-            const savedPreference = localStorage.getItem('qr-show-identity-fields');
-            console.log('💾 Saved preference:', savedPreference);
-            
-            if (savedPreference !== null) {
-                state.showIdentityFields = savedPreference === 'true';
+        }
+
+        function isIdentityField(field) {
+            if (!field) return false;
+            if (field.fieldId && FIELD_DICTIONARY[field.fieldId]) {
+                return FIELD_DICTIONARY[field.fieldId].category === 'Identity';
+            }
+            const match = Object.values(FIELD_DICTIONARY).find(def => def.key === field.key);
+            return match ? match.category === 'Identity' : false;
+        }
+
+        function enforceIdentityFieldVisibility({ skipRender = false } = {}) {
+            const control = document.getElementById('identityToggleControl');
+            const hint = document.getElementById('identityToggleHint');
+
+            if (control) {
+                control.classList.toggle('active', state.showIdentityFields);
+            }
+
+            if (hint) {
+                hint.textContent = state.showIdentityFields
+                    ? 'Include preferred name, pronouns, and gender identity.'
+                    : 'Hidden (not included in QR).';
+            }
+
+            if (state.showIdentityFields) {
+                if (state.hiddenIdentityFields.length > 0) {
+                    const merged = [...state.fields];
+                    state.hiddenIdentityFields
+                        .sort((a, b) => a.index - b.index)
+                        .forEach(({ field, index }) => {
+                            const insertIndex = Math.min(index, merged.length);
+                            merged.splice(insertIndex, 0, field);
+                        });
+                    state.fields = merged;
+                    state.hiddenIdentityFields = [];
+                }
             } else {
-                state.showIdentityFields = false; // Default to unchecked
+                const identityEntries = [];
+                const remaining = [];
+
+                state.fields.forEach((field, index) => {
+                    if (isIdentityField(field)) {
+                        identityEntries.push({ field, index });
+                    } else {
+                        remaining.push(field);
+                    }
+                });
+
+                if (identityEntries.length > 0) {
+                    state.hiddenIdentityFields = identityEntries;
+                    state.fields = remaining;
+                }
             }
-            
-            // Set checkbox to match state
-            identityToggle.checked = state.showIdentityFields;
-            console.log('🏁 Initial identity toggle state:', state.showIdentityFields, 'checkbox:', identityToggle.checked);
-            
-            // Add change listener
-            identityToggle.addEventListener('change', (e) => {
-                console.log('🔄 Identity toggle changed:', e.target.checked);
-                state.showIdentityFields = e.target.checked;
-                localStorage.setItem('qr-show-identity-fields', e.target.checked);
-            });
+
+            if (!skipRender) {
+                renderFields();
+            }
         }
 
         function setHeroDefault() {
@@ -1533,7 +1656,7 @@
                 reminder.innerHTML = `
                     <div class="info-banner-icon">ℹ️</div>
                     <div class="info-banner-content">
-                        <strong>Identity options are hidden.</strong> Check "Show identity options" above to add preferred name, pronouns, and gender identity fields.
+                        <strong>Identity fields are hidden.</strong> Toggle "Identity fields" above to add preferred name, pronouns, and gender identity fields.
                     </div>
                 `;
                 list.appendChild(reminder);
