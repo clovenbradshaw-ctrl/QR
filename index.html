@@ -38,6 +38,22 @@
             --border-light: #3A4556;
         }
         
+        /* Ensure checkbox is visible in dark theme */
+        body.theme-dark #identityFieldsToggle {
+            background: white;
+            border: 2px solid #9C27B0;
+        }
+        
+        /* Dark theme toggle container */
+        body.theme-dark .card-header > div[style*="background: #F3E5F5"] {
+            background: rgba(156, 39, 176, 0.2) !important;
+            border-color: #9C27B0 !important;
+        }
+        
+        body.theme-dark .card-header label[for="identityFieldsToggle"] {
+            color: #CE93D8 !important;
+        }
+        
         body.theme-medical {
             --primary: #E74C3C;
             --accent: #C0392B;
@@ -954,7 +970,7 @@
                     <div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #F3E5F5; border: 2px solid #9C27B0; border-radius: 8px; flex-shrink: 0;">
                         <input type="checkbox" id="identityFieldsToggle" style="width: 20px; height: 20px; cursor: pointer; margin: 0; flex-shrink: 0;">
                         <label for="identityFieldsToggle" style="margin: 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #7B1FA2; white-space: nowrap; user-select: none;">
-                            Show identity options
+                            Show identity options (preferred name, pronouns, gender identity)
                         </label>
                     </div>
                 </div>
@@ -1079,7 +1095,7 @@
         // Field Dictionary (same as original)
         const FIELD_DICTIONARY = {
             1: { key: "name", label: "Full Name", type: "text", icon: "👤", category: "Basic" },
-            403: { key: "preferredName", label: "Preferred Name", type: "text", icon: "✨", category: "Basic" },
+            403: { key: "preferredName", label: "Preferred Name", type: "text", icon: "✨", category: "Identity" },
             51: { key: "phone", label: "Phone Number", type: "tel", icon: "📞", category: "Contact" },
             52: { key: "mobile", label: "Mobile Number", type: "tel", icon: "📱", category: "Contact" },
             76: { key: "email", label: "Email Address", type: "email", icon: "✉️", category: "Contact" },
@@ -1106,19 +1122,19 @@
                 name: "Business Card",
                 icon: "💼",
                 description: "Professional contact info",
-                defaultFields: [1, 403, 201, 202, 52, 76, 104]
+                defaultFields: [1, 201, 202, 52, 76, 104]
             },
             emergency: {
                 name: "Medical Emergency",
                 icon: "🚨",
                 description: "Critical medical information",
-                defaultFields: [1, 403, 251, 252, 253, 255, 256]
+                defaultFields: [1, 251, 252, 253, 255, 256]
             },
             social: {
                 name: "Social Profile",
                 icon: "📱",
                 description: "Social media profiles",
-                defaultFields: [1, 403, 76, 103, 104, 110]
+                defaultFields: [1, 76, 103, 104, 110]
             },
             custom: {
                 name: "Custom",
@@ -1225,19 +1241,35 @@
             document.getElementById('passwordConfirm').addEventListener('input', updatePasswordStrength);
             
             // Identity fields toggle
-            document.getElementById('identityFieldsToggle').addEventListener('change', (e) => {
-                state.showIdentityFields = e.target.checked;
-                localStorage.setItem('qr-show-identity-fields', e.target.checked);
-            });
+            const identityToggle = document.getElementById('identityFieldsToggle');
+            
+            // Check for debug mode (URL parameter)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('reset') === 'true') {
+                localStorage.removeItem('qr-show-identity-fields');
+                console.log('🔄 Reset: Cleared identity toggle preference');
+            }
             
             // Load identity fields preference - default to FALSE (unchecked)
             const savedPreference = localStorage.getItem('qr-show-identity-fields');
+            console.log('💾 Saved preference:', savedPreference);
+            
             if (savedPreference !== null) {
                 state.showIdentityFields = savedPreference === 'true';
             } else {
                 state.showIdentityFields = false; // Default to unchecked
             }
-            document.getElementById('identityFieldsToggle').checked = state.showIdentityFields;
+            
+            // Set checkbox to match state
+            identityToggle.checked = state.showIdentityFields;
+            console.log('🏁 Initial identity toggle state:', state.showIdentityFields, 'checkbox:', identityToggle.checked);
+            
+            // Add change listener
+            identityToggle.addEventListener('change', (e) => {
+                console.log('🔄 Identity toggle changed:', e.target.checked);
+                state.showIdentityFields = e.target.checked;
+                localStorage.setItem('qr-show-identity-fields', e.target.checked);
+            });
         }
 
         function updateProgress() {
@@ -1323,7 +1355,7 @@
                 reminder.innerHTML = `
                     <div class="info-banner-icon">ℹ️</div>
                     <div class="info-banner-content">
-                        <strong>Identity fields are hidden.</strong> Check "Show Identity Options" at the top to add pronouns and gender identity fields.
+                        <strong>Identity options are hidden.</strong> Check "Show identity options" above to add preferred name, pronouns, and gender identity fields.
                     </div>
                 `;
                 list.appendChild(reminder);
