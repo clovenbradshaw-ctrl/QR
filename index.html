@@ -38,20 +38,34 @@
             --border-light: #3A4556;
         }
         
-        /* Ensure checkbox is visible in dark theme */
-        body.theme-dark #identityFieldsToggle {
+        body.theme-dark .identity-toggle-label {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-light);
+            color: var(--text-light);
+        }
+
+        body.theme-dark .identity-toggle-label:hover {
+            color: var(--primary);
+        }
+
+        body.theme-dark .identity-toggle-label.active {
+            background: rgba(230, 126, 34, 0.18);
+        }
+
+        body.theme-dark .identity-toggle-indicator {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        body.theme-dark .identity-toggle-indicator::after {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        body.theme-dark .identity-toggle-label.active .identity-toggle-indicator::after {
             background: white;
-            border: 2px solid #9C27B0;
         }
-        
-        /* Dark theme toggle container */
-        body.theme-dark .card-header > div[style*="background: #F3E5F5"] {
-            background: rgba(156, 39, 176, 0.2) !important;
-            border-color: #9C27B0 !important;
-        }
-        
-        body.theme-dark .card-header label[for="identityFieldsToggle"] {
-            color: #CE93D8 !important;
+
+        body.theme-dark .identity-toggle-hint {
+            color: var(--text-medium);
         }
         
         body.theme-medical {
@@ -762,26 +776,100 @@
             align-items: center;
             gap: 16px;
         }
-        
+
         .identity-options-banner input[type="checkbox"] {
             width: 24px;
             height: 24px;
             cursor: pointer;
         }
-        
+
         .identity-options-text {
             flex: 1;
         }
-        
+
         .identity-options-text strong {
             color: #7B1FA2;
             display: block;
             margin-bottom: 4px;
         }
-        
+
         .identity-options-text span {
             font-size: 0.9rem;
             color: var(--text-medium);
+        }
+
+        .identity-toggle-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .identity-toggle-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .identity-toggle-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-medium);
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .identity-toggle-label:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .identity-toggle-label.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(230, 126, 34, 0.08);
+        }
+
+        .identity-toggle-indicator {
+            width: 28px;
+            height: 16px;
+            border-radius: 999px;
+            background: var(--border-light);
+            position: relative;
+            transition: background 0.2s ease;
+        }
+
+        .identity-toggle-indicator::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-light);
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .identity-toggle-label.active .identity-toggle-indicator {
+            background: var(--primary);
+        }
+
+        .identity-toggle-label.active .identity-toggle-indicator::after {
+            transform: translateX(10px);
+            background: white;
+        }
+
+        .identity-toggle-hint {
+            font-size: 0.75rem;
+            color: var(--text-light);
         }
         
         /* Utilities */
@@ -853,6 +941,11 @@
             
             .mode-selector {
                 grid-template-columns: 1fr;
+            }
+
+            .identity-toggle-wrapper {
+                width: 100%;
+                align-items: flex-start;
             }
         }
     </style>
@@ -962,19 +1055,21 @@
 
             <!-- Step 3: Information -->
             <div class="card">
-                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
                     <div>
                         <h2 class="card-title" style="margin-bottom: 8px;">Add Your Information</h2>
                         <p class="card-subtitle" style="margin: 0;">Fill in the details you want to share</p>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #F3E5F5; border: 2px solid #9C27B0; border-radius: 8px; flex-shrink: 0;">
-                        <input type="checkbox" id="identityFieldsToggle" style="width: 20px; height: 20px; cursor: pointer; margin: 0; flex-shrink: 0;">
-                        <label for="identityFieldsToggle" style="margin: 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #7B1FA2; white-space: nowrap; user-select: none;">
-                            Show identity options (preferred name, pronouns, gender identity)
+                    <div class="identity-toggle-wrapper">
+                        <input type="checkbox" id="identityFieldsToggle" class="identity-toggle-input" aria-label="Toggle identity options (preferred name, pronouns, gender identity)">
+                        <label for="identityFieldsToggle" class="identity-toggle-label" title="Toggle preferred name, pronouns, and gender identity fields">
+                            <span class="identity-toggle-indicator" aria-hidden="true"></span>
+                            <span>Identity options</span>
                         </label>
+                        <span id="identityToggleHint" class="identity-toggle-hint">Identity options hidden</span>
                     </div>
                 </div>
-                
+
                 <div class="field-list" id="fieldList"></div>
                 
                 <div style="margin-top: 20px; text-align: center;">
@@ -1160,6 +1255,7 @@
             protectionPassword: null,
             hasProtectedFields: false,
             showIdentityFields: false,
+            hiddenIdentityFields: [],
             currentStep: 1
         };
 
@@ -1242,7 +1338,7 @@
             
             // Identity fields toggle
             const identityToggle = document.getElementById('identityFieldsToggle');
-            
+
             // Check for debug mode (URL parameter)
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('reset') === 'true') {
@@ -1259,17 +1355,74 @@
             } else {
                 state.showIdentityFields = false; // Default to unchecked
             }
-            
+
             // Set checkbox to match state
             identityToggle.checked = state.showIdentityFields;
             console.log('🏁 Initial identity toggle state:', state.showIdentityFields, 'checkbox:', identityToggle.checked);
-            
+            applyIdentityVisibility();
+            updateIdentityToggleUI();
+
             // Add change listener
             identityToggle.addEventListener('change', (e) => {
                 console.log('🔄 Identity toggle changed:', e.target.checked);
                 state.showIdentityFields = e.target.checked;
                 localStorage.setItem('qr-show-identity-fields', e.target.checked);
+                applyIdentityVisibility();
+                renderFields();
+                updateIdentityToggleUI();
             });
+        }
+
+        function applyIdentityVisibility() {
+            if (state.showIdentityFields) {
+                if (state.hiddenIdentityFields.length > 0) {
+                    const existingIds = new Set(state.fields.map(field => field.id));
+                    const restored = state.hiddenIdentityFields.filter(field => !existingIds.has(field.id));
+                    state.fields = [...state.fields, ...restored].sort((a, b) => a.id - b.id);
+                    state.hiddenIdentityFields = [];
+                }
+                state.hasProtectedFields = state.fields.some(field => field.protected);
+                if (!state.hasProtectedFields) state.protectionPassword = null;
+                return;
+            }
+
+            const preservedHidden = [...state.hiddenIdentityFields];
+            const hiddenIdSet = new Set(preservedHidden.map(field => field.id));
+            const remainingFields = [];
+
+            state.fields.forEach(field => {
+                const fieldDef = FIELD_DICTIONARY[field.fieldId];
+                const isIdentity = fieldDef && fieldDef.category === 'Identity';
+
+                if (isIdentity) {
+                    if (hiddenIdSet.has(field.id)) {
+                        const existingIndex = preservedHidden.findIndex(f => f.id === field.id);
+                        if (existingIndex !== -1) preservedHidden[existingIndex] = field;
+                    } else {
+                        preservedHidden.push(field);
+                        hiddenIdSet.add(field.id);
+                    }
+                } else {
+                    remainingFields.push(field);
+                }
+            });
+
+            state.fields = remainingFields;
+            state.hiddenIdentityFields = preservedHidden;
+            state.hasProtectedFields = state.fields.some(field => field.protected) ||
+                state.hiddenIdentityFields.some(field => field.protected);
+            if (!state.hasProtectedFields) state.protectionPassword = null;
+        }
+
+        function updateIdentityToggleUI() {
+            const label = document.querySelector('.identity-toggle-label');
+            const hint = document.getElementById('identityToggleHint');
+            if (!label || !hint) return;
+
+            label.classList.toggle('active', state.showIdentityFields);
+            hint.textContent = state.showIdentityFields
+                ? 'Identity options shown (preferred name, pronouns, gender identity)'
+                : 'Identity options hidden';
         }
 
         function updateProgress() {
@@ -1310,6 +1463,7 @@
             const template = TEMPLATES[state.selectedTemplate];
             state.fields = [];
             template.defaultFields.forEach(fieldId => addFieldById(fieldId));
+            applyIdentityVisibility();
             renderFields();
         }
 
@@ -1395,8 +1549,25 @@
             const container = document.getElementById('fieldList');
             container.innerHTML = '';
 
+            if (!state.showIdentityFields && state.hiddenIdentityFields.length > 0) {
+                const reminder = document.createElement('div');
+                reminder.className = 'info-banner';
+                reminder.innerHTML = `
+                    <div class="info-banner-icon">👁️‍🗨️</div>
+                    <div class="info-banner-content">
+                        <strong>Identity options are hidden.</strong> Toggle identity options back on to edit preferred name, pronouns, and gender identity fields.
+                    </div>
+                `;
+                container.appendChild(reminder);
+            }
+
             if (state.fields.length === 0) {
-                container.innerHTML = `<p style="text-align: center; color: var(--text-medium); padding: 40px 20px;">No fields yet. Add information fields using the button below.</p>`;
+                const emptyMessage = document.createElement('p');
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.color = 'var(--text-medium)';
+                emptyMessage.style.padding = '40px 20px';
+                emptyMessage.textContent = 'No fields yet. Add information fields using the button below.';
+                container.appendChild(emptyMessage);
                 return;
             }
 
