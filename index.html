@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal QR Code Maker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #E67E22;
+            --primary-dark: #D35400;
+            --accent: #2C5F6F;
+            --accent-light: #3A7D92;
+            --success: #27AE60;
+            --danger: #E74C3C;
+            --text-dark: #2C3E50;
+            --text-medium: #546E7A;
+            --text-light: #95A5A6;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F8F9FA;
+            --bg-accent: #FFF5EE;
+            --border-light: #E0E6ED;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        
+        body.theme-dark {
+            --primary: #E67E22;
+            --accent: #52A7BF;
+            --text-dark: #ECEFF1;
+            --text-medium: #B0BEC5;
+            --text-light: #78909C;
+            --bg-primary: #1A1F2E;
+            --bg-secondary: #252A3A;
+            --bg-accent: #2D3748;
+            --border-light: #3A4556;
+        }
+        
+        body.theme-medical {
+            --primary: #E74C3C;
+            --accent: #C0392B;
+            --bg-accent: #FFEBEE;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            background: var(--bg-secondary);
+            color: var(--text-dark);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Hero Section with Illustration */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 48px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-text {
+            text-align: left;
+        }
+        
+        .hero h1 {
+            font-size: 2.75rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 24px;
+        }
+        
+        .hero-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .hero-image img {
+            max-width: 400px;
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.2));
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: -40px auto 40px;
+            padding: 0 24px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Progress Indicator */
+        .progress-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            background: var(--bg-primary);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            padding: 0 12px;
+        }
+        
+        .progress-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: var(--border-light);
+            z-index: -1;
+        }
+        
+        .progress-step.active::after {
+            background: var(--primary);
+        }
+        
+        .progress-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--border-light);
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+        }
+        
+        .progress-step.active .progress-dot {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .progress-step.complete .progress-dot {
+            background: var(--success);
+            color: white;
+        }
+        
+        .progress-label {
+            font-size: 0.85rem;
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+        
+        .progress-step.active .progress-label {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+        
+        /* Card Style */
+        .card {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .card-header {
+            margin-bottom: 24px;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+        
+        .card-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-medium);
+        }
+        
+        /* Mode Selector */
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .mode-btn {
+            padding: 24px;
+            border: 2px solid var(--border-light);
+            background: var(--bg-primary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .mode-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .mode-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .mode-icon {
+            font-size: 2.5rem;
+        }
+        
+        .mode-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        /* Template Grid */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .template-card {
+            padding: 24px;
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            background: var(--bg-primary);
+        }
+        
+        .template-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .template-card.selected {
+            border-color: var(--success);
+            background: var(--bg-accent);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .template-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+        
+        .template-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+        
+        .template-desc {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+        }
+        
+        /* Compression Toggle */
+        .compression-toggle {
+            display: grid;
+            gap: 16px;
+        }
+        
+        .compression-option {
+            padding: 20px;
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-primary);
+        }
+        
+        .compression-option:hover {
+            border-color: var(--primary);
+        }
+        
+        .compression-option.selected {
+            border-color: var(--success);
+            background: var(--bg-accent);
+        }
+        
+        .compression-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .radio-circle {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: border-color 0.2s ease;
+        }
+        
+        .compression-option.selected .radio-circle {
+            border-color: var(--success);
+        }
+        
+        .radio-inner {
+            width: 10px;
+            height: 10px;
+            background: var(--success);
+            border-radius: 50%;
+            display: none;
+        }
+        
+        .compression-option.selected .radio-inner {
+            display: block;
+        }
+        
+        .compression-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--text-dark);
+        }
+        
+        .compression-desc {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            margin-left: 32px;
+        }
+        
+        /* Info Banner */
+        .info-banner {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: start;
+        }
+        
+        .info-banner-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .info-banner-content {
+            flex: 1;
+        }
+        
+        .info-banner strong {
+            color: #1976D2;
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="url"],
+        input[type="password"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+            background: var(--bg-primary);
+            color: var(--text-dark);
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Field List */
+        .field-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .field-item {
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            transition: box-shadow 0.2s ease;
+        }
+        
+        .field-item:hover {
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .field-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .field-icon {
+            font-size: 1.3rem;
+        }
+        
+        .field-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--accent-light);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-light);
+            color: var(--text-dark);
+        }
+        
+        .btn-outline:hover {
+            border-color: var(--primary);
+            background: var(--bg-accent);
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        /* Privacy Toggle */
+        .privacy-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+        }
+        
+        .privacy-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .privacy-toggle label {
+            margin: 0;
+            font-weight: normal;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        /* QR Output */
+        .qr-output {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .qr-output h3 {
+            font-size: 1.75rem;
+            margin-bottom: 24px;
+            color: var(--text-dark);
+        }
+        
+        #qrcode {
+            display: inline-block;
+            padding: 24px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        
+        /* Theme Selector */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+        }
+        
+        .theme-option {
+            padding: 16px;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: var(--bg-primary);
+        }
+        
+        .theme-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .theme-option.selected {
+            border-color: var(--success);
+            background: var(--bg-accent);
+        }
+        
+        .theme-preview {
+            width: 100%;
+            height: 50px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .theme-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-primary);
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .modal-header h3 {
+            font-size: 1.5rem;
+            color: var(--text-dark);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.75rem;
+            cursor: pointer;
+            color: var(--text-medium);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            background: var(--bg-secondary);
+        }
+        
+        /* Field Picker */
+        .field-picker {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .field-picker-item {
+            padding: 16px;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .field-picker-item:hover {
+            border-color: var(--primary);
+            background: var(--bg-secondary);
+        }
+        
+        .field-picker-category {
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .field-picker-category h4 {
+            font-size: 1rem;
+            color: var(--text-medium);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Identity Options Banner */
+        .identity-options-banner {
+            background: #F3E5F5;
+            border: 2px solid #9C27B0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .identity-options-banner input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .identity-options-text {
+            flex: 1;
+        }
+        
+        .identity-options-text strong {
+            color: #7B1FA2;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .identity-options-text span {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+        }
+        
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .mb-16 {
+            margin-bottom: 16px;
+        }
+        
+        .mb-24 {
+            margin-bottom: 24px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .hero-text {
+                text-align: center;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .hero-image img {
+                max-width: 300px;
+            }
+            
+            .container {
+                padding: 0 16px;
+            }
+            
+            .card {
+                padding: 24px 20px;
+            }
+            
+            .card-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+            }
+            
+            .progress-indicator {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .progress-step::after {
+                display: none;
+            }
+            
+            .template-grid,
+            .theme-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="theme-modern">
+    <!-- Hero Section -->
+    <div class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>Personal QR Code Maker</h1>
+                <p>Create secure, scannable codes for contact info, medical alerts, and more</p>
+            </div>
+            <div class="hero-image">
+                <img src="https://storage.googleapis.com/art_homelessness/1.png" alt="QR Code Backpack" />
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="create">
+                <span class="mode-icon">✏️</span>
+                <span class="mode-label">Make a Code</span>
+            </button>
+            <button class="mode-btn" data-mode="view">
+                <span class="mode-icon">👁️</span>
+                <span class="mode-label">Scan a Code</span>
+            </button>
+        </div>
+
+        <!-- Create Mode -->
+        <div id="createMode">
+            <!-- Progress Indicator -->
+            <div class="progress-indicator">
+                <div class="progress-step active" data-step="1">
+                    <div class="progress-dot">1</div>
+                    <div class="progress-label">Template</div>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="progress-dot">2</div>
+                    <div class="progress-label">Storage</div>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="progress-dot">3</div>
+                    <div class="progress-label">Information</div>
+                </div>
+                <div class="progress-step" data-step="4">
+                    <div class="progress-dot">4</div>
+                    <div class="progress-label">Style</div>
+                </div>
+                <div class="progress-step" data-step="5">
+                    <div class="progress-dot">5</div>
+                    <div class="progress-label">Create</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Template -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Choose a Template</h2>
+                    <p class="card-subtitle">Select what type of information you want to share</p>
+                </div>
+                
+                <div class="template-grid" id="templateSelector"></div>
+            </div>
+
+            <!-- Step 2: Storage -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Storage Type</h2>
+                    <p class="card-subtitle">How much information do you want to include?</p>
+                </div>
+                
+                <div class="info-banner">
+                    <div class="info-banner-icon">💡</div>
+                    <div class="info-banner-content">
+                        <strong>Recommendation:</strong> Use Smart Code for most situations. It stores 2-3× more information.
+                    </div>
+                </div>
+                
+                <div class="compression-toggle">
+                    <div class="compression-option selected" data-mode="maximum">
+                        <div class="compression-header">
+                            <div class="radio-circle">
+                                <div class="radio-inner"></div>
+                            </div>
+                            <div class="compression-title">Smart Code (Recommended)</div>
+                        </div>
+                        <div class="compression-desc">
+                            Stores more information efficiently. Requires this website to read.
+                        </div>
+                    </div>
+                    <div class="compression-option" data-mode="basic">
+                        <div class="compression-header">
+                            <div class="radio-circle">
+                                <div class="radio-inner"></div>
+                            </div>
+                            <div class="compression-title">Simple Code</div>
+                        </div>
+                        <div class="compression-desc">
+                            Works with any QR reader app, but stores less information.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Information -->
+            <div class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h2 class="card-title" style="margin-bottom: 8px;">Add Your Information</h2>
+                        <p class="card-subtitle" style="margin: 0;">Fill in the details you want to share</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #F3E5F5; border: 2px solid #9C27B0; border-radius: 8px; flex-shrink: 0;">
+                        <input type="checkbox" id="identityFieldsToggle" style="width: 20px; height: 20px; cursor: pointer; margin: 0; flex-shrink: 0;">
+                        <label for="identityFieldsToggle" style="margin: 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #7B1FA2; white-space: nowrap; user-select: none;">
+                            Show identity options
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="field-list" id="fieldList"></div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-outline" id="addFieldBtn">
+                        <span>➕</span> Add More Info
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Style -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Choose Style</h2>
+                    <p class="card-subtitle">Pick a visual theme for your code</p>
+                </div>
+                <div class="theme-grid" id="themeSelector"></div>
+            </div>
+
+            <!-- Step 5: Create -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Create Your Code</h2>
+                    <p class="card-subtitle">Generate and download your QR code</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-primary" id="generateBtn" style="font-size: 1.2rem; padding: 16px 40px;">
+                        Create My QR Code →
+                    </button>
+                </div>
+                
+                <div id="qrOutput" class="hidden">
+                    <div class="qr-output">
+                        <h3>✅ Your Code is Ready!</h3>
+                        <div id="qrcode"></div>
+                        <div class="button-group">
+                            <button class="btn btn-success" id="downloadQR">
+                                <span>💾</span> Save Image
+                            </button>
+                            <button class="btn btn-secondary" id="printQR">
+                                <span>🖨️</span> Print
+                            </button>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <p id="dataSize" style="font-size: 0.95rem; color: var(--text-medium);"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Mode -->
+        <div id="viewMode" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Scan a Code</h2>
+                    <p class="card-subtitle">Use your camera to scan a QR code</p>
+                </div>
+                
+                <div id="scannerContainer" class="text-center">
+                    <button class="btn btn-primary" id="startScanBtn">
+                        <span>📷</span> Start Camera Scanner
+                    </button>
+                    <video id="videoElement" style="display: none; max-width: 100%; border-radius: 12px; margin-top: 20px;"></video>
+                    <canvas id="canvasElement" style="display: none;"></canvas>
+                    <p style="margin-top: 20px; color: var(--text-medium);">
+                        Or paste a QR code URL in your browser to view it
+                    </p>
+                </div>
+                <div id="decodedData"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Field Picker Modal -->
+    <div id="fieldPickerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Information</h3>
+                <button class="modal-close" onclick="closeFieldPicker()">×</button>
+            </div>
+            <div class="field-picker" id="fieldPickerList"></div>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔒 Set Password</h3>
+                <button class="modal-close" onclick="closePasswordModal()">×</button>
+            </div>
+            <div class="info-banner" style="margin-bottom: 24px;">
+                <div class="info-banner-icon">ℹ️</div>
+                <div class="info-banner-content">
+                    This password will protect all marked fields. You'll need it to view protected information.
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="passwordInput">Enter Password</label>
+                <input type="password" id="passwordInput" placeholder="Choose a strong password">
+            </div>
+            <div class="form-group">
+                <label for="passwordConfirm">Confirm Password</label>
+                <input type="password" id="passwordConfirm" placeholder="Re-enter password">
+            </div>
+            <div id="passwordStrength"></div>
+            <div class="button-group" style="margin-top: 24px;">
+                <button class="btn btn-outline" onclick="closePasswordModal()">Cancel</button>
+                <button class="btn btn-primary" id="setPasswordBtn">Set Password</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script>
+        // Field Dictionary (same as original)
+        const FIELD_DICTIONARY = {
+            1: { key: "name", label: "Full Name", type: "text", icon: "👤", category: "Basic" },
+            403: { key: "preferredName", label: "Preferred Name", type: "text", icon: "✨", category: "Basic" },
+            51: { key: "phone", label: "Phone Number", type: "tel", icon: "📞", category: "Contact" },
+            52: { key: "mobile", label: "Mobile Number", type: "tel", icon: "📱", category: "Contact" },
+            76: { key: "email", label: "Email Address", type: "email", icon: "✉️", category: "Contact" },
+            103: { key: "instagram", label: "Instagram", type: "text", icon: "📷", category: "Social" },
+            104: { key: "linkedin", label: "LinkedIn", type: "text", icon: "💼", category: "Social" },
+            110: { key: "website", label: "Website", type: "url", icon: "🌐", category: "Social" },
+            201: { key: "jobTitle", label: "Job Title", type: "text", icon: "💼", category: "Work" },
+            202: { key: "company", label: "Company", type: "text", icon: "🏢", category: "Work" },
+            251: { key: "bloodType", label: "Blood Type", type: "select", icon: "🩸", category: "Medical", 
+                   options: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+            252: { key: "allergies", label: "Allergies", type: "text", icon: "⚠️", category: "Medical" },
+            253: { key: "medications", label: "Medications", type: "medication", icon: "💊", category: "Medical" },
+            255: { key: "emergencyContact", label: "Emergency Contact", type: "text", icon: "🚨", category: "Medical" },
+            256: { key: "emergencyPhone", label: "Emergency Phone", type: "tel", icon: "📞", category: "Medical" },
+            326: { key: "address", label: "Address", type: "text", icon: "📍", category: "Location" },
+            401: { key: "pronouns", label: "Pronouns", type: "select", icon: "💬", category: "Identity",
+                   options: ["he/him", "she/her", "they/them", "he/they", "she/they", "ze/zir", "Other", "Prefer not to say"] },
+            402: { key: "genderIdentity", label: "Gender Identity", type: "select", icon: "🏳️‍⚧️", category: "Identity",
+                   options: ["Man", "Woman", "Non-binary", "Genderqueer", "Genderfluid", "Agender", "Two-Spirit", "Transgender man", "Transgender woman", "Other", "Prefer not to say"] },
+        };
+
+        const TEMPLATES = {
+            business: {
+                name: "Business Card",
+                icon: "💼",
+                description: "Professional contact info",
+                defaultFields: [1, 403, 201, 202, 52, 76, 104]
+            },
+            emergency: {
+                name: "Medical Emergency",
+                icon: "🚨",
+                description: "Critical medical information",
+                defaultFields: [1, 403, 251, 252, 253, 255, 256]
+            },
+            social: {
+                name: "Social Profile",
+                icon: "📱",
+                description: "Social media profiles",
+                defaultFields: [1, 403, 76, 103, 104, 110]
+            },
+            custom: {
+                name: "Custom",
+                icon: "⚙️",
+                description: "Start from scratch",
+                defaultFields: []
+            }
+        };
+
+        const THEMES = {
+            modern: { name: "Clean", color: "#E67E22", class: "theme-modern" },
+            medical: { name: "Medical", color: "#E74C3C", class: "theme-medical" },
+            dark: { name: "Dark", color: "#1A1F2E", class: "theme-dark" }
+        };
+
+        const state = {
+            selectedTemplate: 'business',
+            fields: [],
+            selectedTheme: 'modern',
+            compressed: true,
+            nextFieldId: 1,
+            medications: {},
+            protectionPassword: null,
+            hasProtectedFields: false,
+            showIdentityFields: false,
+            currentStep: 1
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTemplateSelector();
+            initializeThemeSelector();
+            initializeEventListeners();
+            loadDefaultTemplate();
+            checkURLForData();
+            updateProgress();
+        });
+
+        function initializeTemplateSelector() {
+            const selector = document.getElementById('templateSelector');
+            selector.innerHTML = '';
+            Object.entries(TEMPLATES).forEach(([key, template]) => {
+                const card = document.createElement('div');
+                card.className = 'template-card';
+                if (key === state.selectedTemplate) card.classList.add('selected');
+                card.innerHTML = `
+                    <div class="template-icon">${template.icon}</div>
+                    <div class="template-name">${template.name}</div>
+                    <div class="template-desc">${template.description}</div>
+                `;
+                card.addEventListener('click', () => selectTemplate(key));
+                selector.appendChild(card);
+            });
+        }
+
+        function initializeThemeSelector() {
+            const selector = document.getElementById('themeSelector');
+            selector.innerHTML = '';
+            Object.entries(THEMES).forEach(([key, theme]) => {
+                const option = document.createElement('div');
+                option.className = 'theme-option';
+                if (key === state.selectedTheme) option.classList.add('selected');
+                option.innerHTML = `
+                    <div class="theme-preview" style="background: ${theme.color};"></div>
+                    <div class="theme-name">${theme.name}</div>
+                `;
+                option.addEventListener('click', () => selectTheme(key));
+                selector.appendChild(option);
+            });
+        }
+
+        function initializeEventListeners() {
+            // Mode switching
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    const mode = e.currentTarget.dataset.mode;
+                    document.getElementById('createMode').classList.toggle('hidden', mode !== 'create');
+                    document.getElementById('viewMode').classList.toggle('hidden', mode !== 'view');
+                });
+            });
+
+            // Compression options
+            document.querySelectorAll('.compression-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    document.querySelectorAll('.compression-option').forEach(o => o.classList.remove('selected'));
+                    e.currentTarget.classList.add('selected');
+                    state.compressed = e.currentTarget.dataset.mode === 'maximum';
+                    updateProgress();
+                });
+            });
+
+            // Buttons
+            document.getElementById('addFieldBtn').addEventListener('click', showFieldPicker);
+            document.getElementById('generateBtn').addEventListener('click', generateQR);
+            document.getElementById('downloadQR').addEventListener('click', downloadQR);
+            document.getElementById('printQR').addEventListener('click', () => window.print());
+            document.getElementById('startScanBtn').addEventListener('click', startScanner);
+            
+            // Password modal
+            document.getElementById('setPasswordBtn').addEventListener('click', validateAndSetPassword);
+            document.getElementById('passwordInput').addEventListener('input', updatePasswordStrength);
+            document.getElementById('passwordConfirm').addEventListener('input', updatePasswordStrength);
+            
+            // Identity fields toggle
+            document.getElementById('identityFieldsToggle').addEventListener('change', (e) => {
+                state.showIdentityFields = e.target.checked;
+                localStorage.setItem('qr-show-identity-fields', e.target.checked);
+            });
+            
+            // Load identity fields preference - default to FALSE (unchecked)
+            const savedPreference = localStorage.getItem('qr-show-identity-fields');
+            if (savedPreference !== null) {
+                state.showIdentityFields = savedPreference === 'true';
+            } else {
+                state.showIdentityFields = false; // Default to unchecked
+            }
+            document.getElementById('identityFieldsToggle').checked = state.showIdentityFields;
+        }
+
+        function updateProgress() {
+            document.querySelectorAll('.progress-step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                step.classList.remove('active', 'complete');
+                if (stepNum < state.currentStep) {
+                    step.classList.add('complete');
+                } else if (stepNum === state.currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        function selectTemplate(templateKey) {
+            state.selectedTemplate = templateKey;
+            state.currentStep = Math.max(state.currentStep, 2);
+            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            loadDefaultTemplate();
+            updateProgress();
+        }
+
+        function selectTheme(themeKey) {
+            state.selectedTheme = themeKey;
+            state.currentStep = Math.max(state.currentStep, 5);
+            document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            Object.values(THEMES).forEach(theme => {
+                document.body.classList.remove(theme.class);
+            });
+            document.body.classList.add(THEMES[themeKey].class);
+            updateProgress();
+        }
+
+        function loadDefaultTemplate() {
+            const template = TEMPLATES[state.selectedTemplate];
+            state.fields = [];
+            template.defaultFields.forEach(fieldId => addFieldById(fieldId));
+            renderFields();
+        }
+
+        function showFieldPicker() {
+            const modal = document.getElementById('fieldPickerModal');
+            const list = document.getElementById('fieldPickerList');
+            list.innerHTML = '';
+            
+            const categories = {};
+            Object.entries(FIELD_DICTIONARY).forEach(([id, field]) => {
+                if (field.category === 'Identity' && !state.showIdentityFields) return;
+                if (!categories[field.category]) categories[field.category] = [];
+                categories[field.category].push({ id: parseInt(id), ...field });
+            });
+            
+            Object.entries(categories).forEach(([category, fields]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'field-picker-category';
+                categoryDiv.innerHTML = `<h4>${category}</h4>`;
+                list.appendChild(categoryDiv);
+                
+                fields.forEach(field => {
+                    const item = document.createElement('div');
+                    item.className = 'field-picker-item';
+                    item.innerHTML = `
+                        <span class="field-icon">${field.icon}</span>
+                        <span>${field.label}</span>
+                    `;
+                    item.addEventListener('click', () => {
+                        addFieldById(field.id);
+                        renderFields();
+                        closeFieldPicker();
+                    });
+                    list.appendChild(item);
+                });
+            });
+            
+            // Identity reminder
+            if (!state.showIdentityFields) {
+                const reminder = document.createElement('div');
+                reminder.className = 'info-banner';
+                reminder.style.marginTop = '24px';
+                reminder.innerHTML = `
+                    <div class="info-banner-icon">ℹ️</div>
+                    <div class="info-banner-content">
+                        <strong>Identity fields are hidden.</strong> Check "Show Identity Options" at the top to add pronouns and gender identity fields.
+                    </div>
+                `;
+                list.appendChild(reminder);
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeFieldPicker() {
+            document.getElementById('fieldPickerModal').classList.remove('active');
+        }
+
+        function addFieldById(fieldId, protected = false) {
+            const fieldDef = FIELD_DICTIONARY[fieldId];
+            if (!fieldDef) return;
+            
+            const field = {
+                id: state.nextFieldId++,
+                fieldId: fieldId,
+                label: fieldDef.label,
+                key: fieldDef.key,
+                type: fieldDef.type,
+                icon: fieldDef.icon,
+                value: '',
+                protected: protected
+            };
+            
+            if (fieldDef.options) field.options = fieldDef.options;
+            if (fieldDef.type === 'medication') field.medications = [];
+            
+            state.fields.push(field);
+            state.currentStep = Math.max(state.currentStep, 3);
+            updateProgress();
+        }
+
+        function renderFields() {
+            const container = document.getElementById('fieldList');
+            container.innerHTML = '';
+
+            if (state.fields.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: var(--text-medium); padding: 40px 20px;">No fields yet. Add information fields using the button below.</p>`;
+                return;
+            }
+
+            state.fields.forEach(field => {
+                const fieldItem = document.createElement('div');
+                fieldItem.className = 'field-item';
+                
+                let inputHTML = '';
+                
+                if (field.type === 'select') {
+                    inputHTML = `
+                        <select data-field-id="${field.id}">
+                            <option value="">Select ${field.label}</option>
+                            ${field.options.map(opt => 
+                                `<option value="${opt}" ${field.value === opt ? 'selected' : ''}>${opt}</option>`
+                            ).join('')}
+                        </select>
+                    `;
+                } else if (field.type === 'medication') {
+                    inputHTML = `
+                        <input type="text" 
+                               data-field-id="${field.id}" 
+                               placeholder="Search for medication...">
+                        <div id="med-list-${field.id}" style="margin-top: 12px;"></div>
+                    `;
+                } else {
+                    inputHTML = `
+                        <input type="${field.type}" 
+                               data-field-id="${field.id}" 
+                               value="${field.value}" 
+                               placeholder="Enter ${field.label.toLowerCase()}">
+                    `;
+                }
+                
+                fieldItem.innerHTML = `
+                    <div class="field-header">
+                        <div class="field-label">
+                            <span class="field-icon">${field.icon}</span>
+                            <span>${field.label}</span>
+                        </div>
+                        <div class="field-actions">
+                            <button class="btn btn-danger btn-small" data-field-id="${field.id}">Remove</button>
+                        </div>
+                    </div>
+                    ${inputHTML}
+                    <div class="privacy-toggle">
+                        <input type="checkbox" data-field-id="${field.id}" data-protected="true" 
+                               ${field.protected ? 'checked' : ''} id="protect-${field.id}">
+                        <label for="protect-${field.id}">🔒 Password protect this field</label>
+                    </div>
+                `;
+
+                container.appendChild(fieldItem);
+            });
+
+            // Attach event listeners
+            container.querySelectorAll('input[data-field-id], select[data-field-id]').forEach(input => {
+                if (input.dataset.protected === 'true') {
+                    input.addEventListener('change', (e) => {
+                        const field = state.fields.find(f => f.id == e.target.dataset.fieldId);
+                        if (!field) return;
+                        
+                        if (e.target.checked) {
+                            if (!state.protectionPassword) {
+                                e.target.checked = false;
+                                showPasswordModal(field.id);
+                            } else {
+                                field.protected = true;
+                                state.hasProtectedFields = true;
+                            }
+                        } else {
+                            field.protected = false;
+                            state.hasProtectedFields = state.fields.some(f => f.protected);
+                            if (!state.hasProtectedFields) state.protectionPassword = null;
+                        }
+                    });
+                } else {
+                    input.addEventListener('input', (e) => {
+                        const field = state.fields.find(f => f.id == e.target.dataset.fieldId);
+                        if (field) field.value = e.target.value;
+                    });
+                }
+            });
+
+            container.querySelectorAll('.btn-danger').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const fieldId = parseInt(e.target.dataset.fieldId);
+                    state.fields = state.fields.filter(f => f.id !== fieldId);
+                    renderFields();
+                });
+            });
+        }
+
+        // Password Modal Functions
+        let pendingProtectionFieldId = null;
+
+        function showPasswordModal(fieldId) {
+            pendingProtectionFieldId = fieldId;
+            document.getElementById('passwordModal').classList.add('active');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordConfirm').value = '';
+            document.getElementById('passwordStrength').innerHTML = '';
+            document.getElementById('passwordInput').focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('active');
+            pendingProtectionFieldId = null;
+        }
+
+        window.closePasswordModal = closePasswordModal;
+        window.closeFieldPicker = closeFieldPicker;
+
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            let feedback = [];
+            
+            if (password.length >= 8) strength++;
+            else feedback.push('at least 8 characters');
+            if (password.length >= 12) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            else feedback.push('lowercase letters');
+            if (/[A-Z]/.test(password)) strength++;
+            else feedback.push('uppercase letters');
+            if (/[0-9]/.test(password)) strength++;
+            else feedback.push('numbers');
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            else feedback.push('special characters');
+            
+            return { strength, feedback };
+        }
+
+        function updatePasswordStrength() {
+            const password = document.getElementById('passwordInput').value;
+            const confirm = document.getElementById('passwordConfirm').value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            if (password.length === 0) {
+                strengthDiv.innerHTML = '';
+                return;
+            }
+            
+            const { strength, feedback } = checkPasswordStrength(password);
+            
+            let color, text, bgColor;
+            if (strength < 3) {
+                color = '#E74C3C';
+                bgColor = '#FFEBEE';
+                text = '❌ Weak - Not secure enough';
+            } else if (strength < 5) {
+                color = '#F39C12';
+                bgColor = '#FFF3E0';
+                text = '⚠️ Medium - Could be stronger';
+            } else {
+                color = '#27AE60';
+                bgColor = '#E8F5E9';
+                text = '✓ Strong - Good password';
+            }
+            
+            let html = `
+                <div style="padding: 12px; background: ${bgColor}; border-radius: 8px; border: 2px solid ${color}; margin-bottom: 16px;">
+                    <div style="color: ${color}; font-weight: 600; margin-bottom: 8px;">${text}</div>
+            `;
+            
+            if (feedback.length > 0 && strength < 5) {
+                html += `<div style="font-size: 0.85rem; color: var(--text-medium);">Add: ${feedback.join(', ')}</div>`;
+            }
+            
+            if (confirm.length > 0) {
+                if (password === confirm) {
+                    html += `<div style="color: #27AE60; font-size: 0.85rem; margin-top: 4px;">✓ Passwords match</div>`;
+                } else {
+                    html += `<div style="color: #E74C3C; font-size: 0.85rem; margin-top: 4px;">✗ Passwords don't match</div>`;
+                }
+            }
+            
+            html += '</div>';
+            strengthDiv.innerHTML = html;
+        }
+
+        function validateAndSetPassword() {
+            const password = document.getElementById('passwordInput').value;
+            const confirm = document.getElementById('passwordConfirm').value;
+            
+            if (!password) {
+                alert('Please enter a password.');
+                return;
+            }
+            
+            if (password !== confirm) {
+                alert('Passwords do not match.');
+                return;
+            }
+            
+            const { strength } = checkPasswordStrength(password);
+            
+            if (strength < 4) {
+                const proceed = confirm(
+                    'Your password is not very strong. A strong password should have:\n' +
+                    '• At least 8 characters (12+ recommended)\n' +
+                    '• Uppercase and lowercase letters\n' +
+                    '• Numbers and special characters\n\n' +
+                    'Use this password anyway?'
+                );
+                if (!proceed) return;
+            }
+            
+            state.protectionPassword = password;
+            state.hasProtectedFields = true;
+            
+            if (pendingProtectionFieldId) {
+                const field = state.fields.find(f => f.id === pendingProtectionFieldId);
+                if (field) field.protected = true;
+            }
+            
+            closePasswordModal();
+            renderFields();
+            
+            // Success notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 24px;
+                background: #E8F5E9;
+                color: #27AE60;
+                padding: 16px 24px;
+                border-radius: 12px;
+                border: 2px solid #27AE60;
+                font-weight: 600;
+                z-index: 10001;
+                box-shadow: var(--shadow-lg);
+            `;
+            notification.textContent = '✓ Password set successfully';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transition = 'opacity 0.3s';
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        async function generateQR() {
+            if (state.fields.length === 0) {
+                alert('Please add at least one field.');
+                return;
+            }
+
+            state.currentStep = 5;
+            updateProgress();
+
+            const publicFields = state.fields.filter(f => !f.protected && (f.value || f.medications?.length > 0));
+            const protectedFields = state.fields.filter(f => f.protected && (f.value || f.medications?.length > 0));
+
+            let data;
+            
+            if (state.compressed) {
+                data = {
+                    v: 1,
+                    t: Object.keys(TEMPLATES).indexOf(state.selectedTemplate),
+                    th: Object.keys(THEMES).indexOf(state.selectedTheme),
+                    f: publicFields.map(f => {
+                        if (f.medications) return [f.fieldId || f.key, f.medications];
+                        return [f.fieldId || f.key, f.value];
+                    })
+                };
+
+                if (protectedFields.length > 0) {
+                    if (!state.protectionPassword) {
+                        alert('Error: Password not set for protected fields.');
+                        return;
+                    }
+                    const encryptedData = await encryptFields(protectedFields, state.protectionPassword);
+                    data.enc = encryptedData;
+                }
+            } else {
+                data = {
+                    version: "1.0",
+                    template: state.selectedTemplate,
+                    theme: state.selectedTheme,
+                    fields: publicFields.map(f => ({
+                        key: f.key,
+                        label: f.label,
+                        value: f.medications || f.value,
+                        type: f.type
+                    }))
+                };
+                
+                if (protectedFields.length > 0) {
+                    if (!state.protectionPassword) {
+                        alert('Error: Password not set for protected fields.');
+                        return;
+                    }
+                    const encryptedData = await encryptFields(protectedFields, state.protectionPassword);
+                    data.protected = encryptedData;
+                }
+            }
+
+            const jsonString = JSON.stringify(data);
+            const encoded = btoa(jsonString);
+            const url = `${window.location.origin}${window.location.pathname}#${encoded}`;
+
+            displayQRCode(url, jsonString.length);
+        }
+
+        async function encryptFields(fields, password) {
+            const data = JSON.stringify(fields.map(f => [f.fieldId || f.key, f.medications || f.value]));
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+            const key = await crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt: enc.encode("qr-salt-v1"), iterations: 100000, hash: "SHA-256" },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["encrypt"]
+            );
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(data));
+            const combined = new Uint8Array(iv.length + encrypted.byteLength);
+            combined.set(iv, 0);
+            combined.set(new Uint8Array(encrypted), iv.length);
+            return btoa(String.fromCharCode(...combined));
+        }
+
+        function displayQRCode(url, dataSize) {
+            const output = document.getElementById('qrOutput');
+            const qrcodeDiv = document.getElementById('qrcode');
+            qrcodeDiv.innerHTML = '';
+            
+            new QRCode(qrcodeDiv, {
+                text: url,
+                width: 300,
+                height: 300,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            document.getElementById('dataSize').textContent = `Data size: ${dataSize} bytes`;
+            output.classList.remove('hidden');
+            output.scrollIntoView({ behavior: 'smooth' });
+            window.currentQRUrl = url;
+        }
+
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (!canvas) return;
+            const url = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'qr-code.png';
+            link.href = url;
+            link.click();
+        }
+
+        function checkURLForData() {
+            const hash = window.location.hash.substring(1);
+            if (!hash) return;
+
+            try {
+                const decoded = atob(hash);
+                const data = JSON.parse(decoded);
+                document.querySelector('[data-mode="view"]').click();
+                displayDecodedData(data);
+            } catch (e) {
+                console.error('Error decoding:', e);
+            }
+        }
+
+        function displayDecodedData(data) {
+            const container = document.getElementById('decodedData');
+            container.innerHTML = '';
+
+            const isCompressed = data.v !== undefined;
+            let fields;
+
+            if (isCompressed) {
+                fields = data.f.map(([fieldId, value]) => {
+                    const fieldDef = typeof fieldId === 'number' ? FIELD_DICTIONARY[fieldId] : null;
+                    return {
+                        key: fieldDef ? fieldDef.key : fieldId,
+                        label: fieldDef ? fieldDef.label : fieldId,
+                        icon: fieldDef ? fieldDef.icon : '📝',
+                        value: value,
+                        type: fieldDef ? fieldDef.type : 'text'
+                    };
+                });
+            } else {
+                fields = data.fields;
+            }
+
+            const fieldsHtml = fields.map(field => {
+                let valueHtml = '';
+                if (Array.isArray(field.value)) {
+                    valueHtml = field.value.map(med => 
+                        `<div style="margin-bottom: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                            <strong>${med.brand || med.generic}</strong><br>
+                            ${med.dosage ? `<span style="color: var(--text-medium);">Dosage: ${med.dosage}</span><br>` : ''}
+                            ${med.frequency ? `<span style="color: var(--text-medium);">Frequency: ${med.frequency}</span>` : ''}
+                        </div>`
+                    ).join('');
+                } else {
+                    valueHtml = formatFieldValue(field);
+                }
+                
+                return `
+                    <div class="field-item" style="margin-bottom: 16px;">
+                        <div class="field-label" style="margin-bottom: 8px;">
+                            <span class="field-icon">${field.icon}</span>
+                            <span style="color: var(--text-medium); font-size: 0.9rem;">${field.label}</span>
+                        </div>
+                        <div style="font-size: 1.1rem; color: var(--text-dark);">${valueHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <h2 class="card-title">Decoded Information</h2>
+                    </div>
+                    ${fieldsHtml}
+                </div>
+            `;
+        }
+
+        function formatFieldValue(field) {
+            if (field.type === 'url') return `<a href="${field.value}" target="_blank" style="color: var(--primary);">${field.value}</a>`;
+            if (field.type === 'email') return `<a href="mailto:${field.value}" style="color: var(--primary);">${field.value}</a>`;
+            if (field.type === 'tel') return `<a href="tel:${field.value}" style="color: var(--primary);">${field.value}</a>`;
+            return field.value;
+        }
+
+        // QR Scanner (simplified for brevity)
+        let stream = null;
+        let scanning = false;
+
+        async function startScanner() {
+            const video = document.getElementById('videoElement');
+            const btn = document.getElementById('startScanBtn');
+            
+            if (scanning) {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+                video.style.display = 'none';
+                scanning = false;
+                btn.innerHTML = '<span>📷</span> Start Camera Scanner';
+                return;
+            }
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                video.play();
+                scanning = true;
+                btn.innerHTML = '<span>⏸️</span> Stop Scanner';
+            } catch (error) {
+                alert('Camera access denied or not available.');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
