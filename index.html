@@ -1646,6 +1646,7 @@
             Object.entries(TEMPLATES).forEach(([key, template]) => {
                 const card = document.createElement('div');
                 card.className = 'template-card';
+                card.dataset.template = key;
                 if (key === state.selectedTemplate) card.classList.add('selected');
                 card.innerHTML = `
                     <div class="template-icon">${template.icon}</div>
@@ -1663,6 +1664,7 @@
             Object.entries(THEMES).forEach(([key, theme]) => {
                 const option = document.createElement('div');
                 option.className = 'theme-option';
+                option.dataset.theme = key;
                 if (key === state.selectedTheme) option.classList.add('selected');
                 option.innerHTML = `
                     <div class="theme-preview" style="background: ${theme.color};"></div>
@@ -1777,6 +1779,20 @@
                     state.fields = merged;
                     state.hiddenIdentityFields = [];
                 }
+
+                const identityFieldIds = [403, 401, 402];
+                identityFieldIds.forEach(fieldId => {
+                    const fieldDef = FIELD_DICTIONARY[fieldId];
+                    if (!fieldDef) return;
+
+                    const alreadyPresent = state.fields.some(field =>
+                        field.fieldId === fieldId || field.key === fieldDef.key
+                    );
+
+                    if (!alreadyPresent) {
+                        addFieldById(fieldId);
+                    }
+                });
             } else {
                 const identityEntries = [];
                 const remaining = [];
@@ -1858,8 +1874,9 @@
         function selectTemplate(templateKey) {
             state.selectedTemplate = templateKey;
             state.currentStep = Math.max(state.currentStep, 2);
-            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
+            document.querySelectorAll('.template-card').forEach(c => {
+                c.classList.toggle('selected', c.dataset.template === templateKey);
+            });
             loadDefaultTemplate();
             updateProgress();
         }
@@ -1867,9 +1884,10 @@
         function selectTheme(themeKey) {
             state.selectedTheme = themeKey;
             state.currentStep = Math.max(state.currentStep, 5);
-            document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            
+            document.querySelectorAll('.theme-option').forEach(o => {
+                o.classList.toggle('selected', o.dataset.theme === themeKey);
+            });
+
             Object.values(THEMES).forEach(theme => {
                 document.body.classList.remove(theme.class);
             });
