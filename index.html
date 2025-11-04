@@ -39,81 +39,6 @@
             --border-light: #3A4556;
         }
         
-        /* Identity toggle */
-        .identity-toggle-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 6px 14px;
-            border-radius: 999px;
-            border: 1px solid var(--border-light);
-            background: var(--bg-primary);
-            color: var(--text-medium);
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-            box-shadow: var(--shadow-sm);
-            user-select: none;
-        }
-
-        .identity-toggle-control input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin: 0;
-            accent-color: #7B1FA2;
-            flex-shrink: 0;
-        }
-
-        .identity-toggle-text {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.2;
-        }
-
-        .identity-toggle-title {
-            font-weight: 600;
-            color: var(--text-medium);
-            letter-spacing: 0.2px;
-        }
-
-        .identity-toggle-control.active {
-            border-color: #9C27B0;
-            background: rgba(156, 39, 176, 0.08);
-            color: #7B1FA2;
-        }
-
-        .identity-toggle-control.active .identity-toggle-title {
-            color: #7B1FA2;
-        }
-
-        .identity-toggle-hint {
-            font-size: 0.75rem;
-            color: var(--text-light);
-        }
-
-        body.theme-dark .identity-toggle-control {
-            background: rgba(156, 39, 176, 0.12);
-            border-color: rgba(156, 39, 176, 0.4);
-            box-shadow: none;
-        }
-
-        body.theme-dark .identity-toggle-control.active {
-            background: rgba(156, 39, 176, 0.2);
-        }
-
-        body.theme-dark .identity-toggle-title,
-        body.theme-dark .identity-toggle-hint {
-            color: #CE93D8;
-        }
-
-        body.theme-dark .identity-toggle-control.active .identity-toggle-title {
-            color: #F3E5F5;
-        }
-
-        body.theme-dark .identity-toggle-control.active .identity-toggle-hint {
-            color: #E1BEE7;
-        }
-        
         body.theme-medical {
             --primary: #E74C3C;
             --accent: #C0392B;
@@ -945,38 +870,36 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
-        /* Identity Options Banner */
-        .identity-options-banner {
-            background: #F3E5F5;
+
+        .identity-highlight {
             border: 2px solid #9C27B0;
+            background: rgba(156, 39, 176, 0.08);
+            color: var(--text-dark);
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 24px;
             display: flex;
-            align-items: center;
             gap: 16px;
+            align-items: flex-start;
         }
-        
-        .identity-options-banner input[type="checkbox"] {
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
+
+        .identity-highlight .identity-icon {
+            font-size: 1.5rem;
         }
-        
-        .identity-options-text {
-            flex: 1;
-        }
-        
-        .identity-options-text strong {
+
+        .identity-highlight strong {
             color: #7B1FA2;
             display: block;
             margin-bottom: 4px;
         }
-        
-        .identity-options-text span {
-            font-size: 0.9rem;
-            color: var(--text-medium);
+
+        body.theme-dark .identity-highlight {
+            background: rgba(156, 39, 176, 0.25);
+            border-color: rgba(206, 147, 216, 0.8);
+            color: #ECEFF1;
+        }
+
+        body.theme-dark .identity-highlight strong {
+            color: #E1BEE7;
         }
         
         /* Utilities */
@@ -1160,13 +1083,6 @@
                         <h2 class="card-title" style="margin-bottom: 8px;">Add Your Information</h2>
                         <p class="card-subtitle" style="margin: 0;">Fill in the details you want to share</p>
                     </div>
-                    <label class="identity-toggle-control" id="identityToggleControl">
-                        <input type="checkbox" id="identityFieldsToggle">
-                        <div class="identity-toggle-text">
-                            <span class="identity-toggle-title">Identity fields</span>
-                            <span class="identity-toggle-hint" id="identityToggleHint">Hidden (not included in QR).</span>
-                        </div>
-                    </label>
                 </div>
                 
                 <div class="field-list" id="fieldList"></div>
@@ -1505,8 +1421,8 @@
                         What's the difference between the identity options?
                     </summary>
                     <p style="margin-top: 12px; color: var(--text-medium); line-height: 1.6;">
-                        Identity options (preferred name, pronouns, gender identity) are hidden by default to respect privacy.
-                        You must explicitly check "Show identity options" to add these fields. This ensures no one is forced to share identity information they're not comfortable sharing.
+                        Identity options (preferred name, pronouns, gender identity) live at the top of the "Add More Info" picker.
+                        Add them like any other field so you control when that information is shared while keeping it easy to find.
                     </p>
                 </details>
             </div>
@@ -1623,8 +1539,6 @@
             medications: {},
             protectionPassword: null,
             hasProtectedFields: false,
-            showIdentityFields: false,
-            hiddenIdentityFields: [],
             currentStep: 1
         };
 
@@ -1634,7 +1548,6 @@
             initializeThemeSelector();
             initializeEventListeners();
             loadDefaultTemplate();
-            enforceIdentityFieldVisibility();
             setHeroDefault();
             checkURLForData();
             updateProgress();
@@ -1709,111 +1622,6 @@
             document.getElementById('passwordInput').addEventListener('input', updatePasswordStrength);
             document.getElementById('passwordConfirm').addEventListener('input', updatePasswordStrength);
             
-            // Identity fields toggle
-            const identityToggle = document.getElementById('identityFieldsToggle');
-
-            if (identityToggle) {
-                // Check for debug mode (URL parameter)
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('reset') === 'true') {
-                    localStorage.removeItem('qr-show-identity-fields');
-                    console.log('🔄 Reset: Cleared identity toggle preference');
-                }
-
-                // Load identity fields preference - default to FALSE (unchecked)
-                const savedPreference = localStorage.getItem('qr-show-identity-fields');
-                console.log('💾 Saved preference:', savedPreference);
-
-                if (savedPreference !== null) {
-                    state.showIdentityFields = savedPreference === 'true';
-                } else {
-                    state.showIdentityFields = false; // Default to unchecked
-                }
-
-                // Set checkbox to match state
-                identityToggle.checked = state.showIdentityFields;
-                console.log('🏁 Initial identity toggle state:', state.showIdentityFields, 'checkbox:', identityToggle.checked);
-
-                // Add change listener
-                identityToggle.addEventListener('change', (e) => {
-                    console.log('🔄 Identity toggle changed:', e.target.checked);
-                    state.showIdentityFields = e.target.checked;
-                    localStorage.setItem('qr-show-identity-fields', e.target.checked ? 'true' : 'false');
-                    enforceIdentityFieldVisibility();
-                });
-            }
-        }
-
-        function isIdentityField(field) {
-            if (!field) return false;
-            if (field.fieldId && FIELD_DICTIONARY[field.fieldId]) {
-                return FIELD_DICTIONARY[field.fieldId].category === 'Identity';
-            }
-            const match = Object.values(FIELD_DICTIONARY).find(def => def.key === field.key);
-            return match ? match.category === 'Identity' : false;
-        }
-
-        function enforceIdentityFieldVisibility({ skipRender = false } = {}) {
-            const control = document.getElementById('identityToggleControl');
-            const hint = document.getElementById('identityToggleHint');
-
-            if (control) {
-                control.classList.toggle('active', state.showIdentityFields);
-            }
-
-            if (hint) {
-                hint.textContent = state.showIdentityFields
-                    ? 'Include preferred name, pronouns, and gender identity.'
-                    : 'Hidden (not included in QR).';
-            }
-
-            if (state.showIdentityFields) {
-                if (state.hiddenIdentityFields.length > 0) {
-                    const merged = [...state.fields];
-                    state.hiddenIdentityFields
-                        .sort((a, b) => a.index - b.index)
-                        .forEach(({ field, index }) => {
-                            const insertIndex = Math.min(index, merged.length);
-                            merged.splice(insertIndex, 0, field);
-                        });
-                    state.fields = merged;
-                    state.hiddenIdentityFields = [];
-                }
-
-                const identityFieldIds = [403, 401, 402];
-                identityFieldIds.forEach(fieldId => {
-                    const fieldDef = FIELD_DICTIONARY[fieldId];
-                    if (!fieldDef) return;
-
-                    const alreadyPresent = state.fields.some(field =>
-                        field.fieldId === fieldId || field.key === fieldDef.key
-                    );
-
-                    if (!alreadyPresent) {
-                        addFieldById(fieldId);
-                    }
-                });
-            } else {
-                const identityEntries = [];
-                const remaining = [];
-
-                state.fields.forEach((field, index) => {
-                    if (isIdentityField(field)) {
-                        identityEntries.push({ field, index });
-                    } else {
-                        remaining.push(field);
-                    }
-                });
-
-                if (identityEntries.length > 0) {
-                    state.hiddenIdentityFields = identityEntries;
-                    state.fields = remaining;
-                }
-            }
-
-            if (!skipRender) {
-                renderFields();
-            }
         }
 
         function setHeroDefault() {
@@ -1906,20 +1714,40 @@
             const modal = document.getElementById('fieldPickerModal');
             const list = document.getElementById('fieldPickerList');
             list.innerHTML = '';
-            
+
             const categories = {};
             Object.entries(FIELD_DICTIONARY).forEach(([id, field]) => {
-                if (field.category === 'Identity' && !state.showIdentityFields) return;
                 if (!categories[field.category]) categories[field.category] = [];
                 categories[field.category].push({ id: parseInt(id), ...field });
             });
-            
-            Object.entries(categories).forEach(([category, fields]) => {
+
+            const orderedCategories = Object.keys(categories).sort((a, b) => {
+                if (a === 'Identity') return -1;
+                if (b === 'Identity') return 1;
+                return a.localeCompare(b);
+            });
+
+            orderedCategories.forEach(category => {
+                const fields = categories[category].sort((a, b) => a.label.localeCompare(b.label));
+
+                if (category === 'Identity') {
+                    const callout = document.createElement('div');
+                    callout.className = 'identity-highlight';
+                    callout.innerHTML = `
+                        <span class="identity-icon">🏳️‍⚧️</span>
+                        <div>
+                            <strong>Identity fields</strong>
+                            Add preferred name, pronouns, and gender identity so people address you correctly.
+                        </div>
+                    `;
+                    list.appendChild(callout);
+                }
+
                 const categoryDiv = document.createElement('div');
                 categoryDiv.className = 'field-picker-category';
                 categoryDiv.innerHTML = `<h4>${category}</h4>`;
                 list.appendChild(categoryDiv);
-                
+
                 fields.forEach(field => {
                     const item = document.createElement('div');
                     item.className = 'field-picker-item';
@@ -1935,21 +1763,7 @@
                     list.appendChild(item);
                 });
             });
-            
-            // Identity reminder
-            if (!state.showIdentityFields) {
-                const reminder = document.createElement('div');
-                reminder.className = 'info-banner';
-                reminder.style.marginTop = '24px';
-                reminder.innerHTML = `
-                    <div class="info-banner-icon">ℹ️</div>
-                    <div class="info-banner-content">
-                        <strong>Identity fields are hidden.</strong> Toggle "Identity fields" above to add preferred name, pronouns, and gender identity fields.
-                    </div>
-                `;
-                list.appendChild(reminder);
-            }
-            
+
             modal.classList.add('active');
         }
 
