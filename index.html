@@ -735,6 +735,45 @@
             margin-top: 24px;
             flex-wrap: wrap;
         }
+
+        .share-options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .share-section + .share-section {
+            margin-top: 24px;
+        }
+
+        .share-section h4 {
+            margin-bottom: 12px;
+            color: var(--text-dark);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .share-option {
+            padding: 14px 16px;
+            border: 2px solid var(--border-light);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+        }
+
+        .share-option:hover {
+            border-color: var(--primary);
+            background: var(--bg-secondary);
+        }
+
+        .share-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         
         /* Theme Selector */
         .theme-grid {
@@ -1121,12 +1160,21 @@
                         <h3>✅ Your Code is Ready!</h3>
                         <div id="qrcode"></div>
                         <div class="button-group">
+                            <button class="btn btn-primary" id="shareQR">
+                                <span>📤</span> Share
+                            </button>
                             <button class="btn btn-success" id="downloadQR">
                                 <span>💾</span> Save Image
                             </button>
                             <button class="btn btn-secondary" id="printQR">
                                 <span>🖨️</span> Print
                             </button>
+                        </div>
+                        <div class="info-banner" style="margin-top: 16px;">
+                            <div class="info-banner-icon">💡</div>
+                            <div class="info-banner-content">
+                                <strong>Tip:</strong> Sharing the image lets people scan it instantly. Sharing the link means they must open this site first.
+                            </div>
                         </div>
                         <div style="margin-top: 20px;">
                             <p id="dataSize" style="font-size: 0.95rem; color: var(--text-medium);"></p>
@@ -1469,6 +1517,32 @@
         </div>
     </div>
 
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📤 Share QR Code</h3>
+                <button class="modal-close" onclick="closeShareModal()">×</button>
+            </div>
+            <div class="share-options">
+                <div class="share-section">
+                    <h4>Share Image</h4>
+                    <div id="nativeShareOption" class="share-option">📤 Share…</div>
+                    <div id="whatsappImageOption" class="share-option">💚 WhatsApp</div>
+                    <div id="telegramImageOption" class="share-option">✈️ Telegram</div>
+                    <div id="copyImageOption" class="share-option">🖼️ Copy Image</div>
+                    <div id="downloadImageOption" class="share-option">💾 Download</div>
+                </div>
+                <div class="share-section" id="linkShareSection">
+                    <h4>Share Link or Message <span style="font-size:0.85em; color: var(--text-medium);">(link requires this website)</span></h4>
+                    <div id="copyLinkOption" class="share-option">📋 Copy Link</div>
+                    <div id="smsOption" class="share-option">💬 Text Message</div>
+                    <div id="emailOption" class="share-option">✉️ Email</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <script>
@@ -1616,12 +1690,359 @@
             document.getElementById('downloadQR').addEventListener('click', downloadQR);
             document.getElementById('printQR').addEventListener('click', () => window.print());
             document.getElementById('startScanBtn').addEventListener('click', startScanner);
-            
+            const shareButton = document.getElementById('shareQR');
+            if (shareButton) {
+                shareButton.addEventListener('click', async () => {
+                    if (!ensureQRAvailable()) return;
+
+                    if (canShareFiles()) {
+                        const success = await shareQRImage();
+                        if (!success) showShareModal();
+                    } else {
+                        showShareModal();
+                    }
+                });
+            }
+
+            const shareModal = document.getElementById('shareModal');
+            if (shareModal) {
+                shareModal.addEventListener('click', (event) => {
+                    if (event.target === shareModal) closeShareModal();
+                });
+            }
+
+            const nativeShareOption = document.getElementById('nativeShareOption');
+            if (nativeShareOption) {
+                nativeShareOption.addEventListener('click', async () => {
+                    const success = await shareQRImage();
+                    if (success) closeShareModal();
+                });
+            }
+
+            const whatsappOption = document.getElementById('whatsappImageOption');
+            if (whatsappOption) {
+                whatsappOption.addEventListener('click', async () => {
+                    const success = await shareViaWhatsAppImage();
+                    if (success) closeShareModal();
+                });
+            }
+
+            const telegramOption = document.getElementById('telegramImageOption');
+            if (telegramOption) {
+                telegramOption.addEventListener('click', async () => {
+                    const success = await shareViaTelegramImage();
+                    if (success) closeShareModal();
+                });
+            }
+
+            const copyImageOption = document.getElementById('copyImageOption');
+            if (copyImageOption) {
+                copyImageOption.addEventListener('click', async () => {
+                    const success = await copyImageToClipboard();
+                    if (success) closeShareModal();
+                });
+            }
+
+            const downloadImageOption = document.getElementById('downloadImageOption');
+            if (downloadImageOption) {
+                downloadImageOption.addEventListener('click', () => {
+                    downloadQR();
+                    closeShareModal();
+                });
+            }
+
+            const copyLinkOption = document.getElementById('copyLinkOption');
+            if (copyLinkOption) {
+                copyLinkOption.addEventListener('click', async () => {
+                    const success = await copyShareLink();
+                    if (success) closeShareModal();
+                });
+            }
+
+            const smsOption = document.getElementById('smsOption');
+            if (smsOption) {
+                smsOption.addEventListener('click', () => {
+                    const success = shareViaSMS();
+                    if (success) closeShareModal();
+                });
+            }
+
+            const emailOption = document.getElementById('emailOption');
+            if (emailOption) {
+                emailOption.addEventListener('click', () => {
+                    const success = shareViaEmailWithImage();
+                    if (success) closeShareModal();
+                });
+            }
+
             // Password modal
             document.getElementById('setPasswordBtn').addEventListener('click', validateAndSetPassword);
             document.getElementById('passwordInput').addEventListener('input', updatePasswordStrength);
             document.getElementById('passwordConfirm').addEventListener('input', updatePasswordStrength);
-            
+
+        }
+
+        function showNotification(message, type = 'info') {
+            const palette = {
+                success: { background: '#E8F5E9', border: '#27AE60', color: '#1B5E20' },
+                error: { background: '#FFEBEE', border: '#C62828', color: '#B71C1C' },
+                info: { background: '#E3F2FD', border: '#1976D2', color: '#0D47A1' }
+            }[type] || { background: '#E3F2FD', border: '#1976D2', color: '#0D47A1' };
+
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 24px;
+                background: ${palette.background};
+                color: ${palette.color};
+                padding: 16px 24px;
+                border-radius: 12px;
+                border: 2px solid ${palette.border};
+                font-weight: 600;
+                z-index: 10001;
+                box-shadow: var(--shadow-lg);
+                max-width: 320px;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.transition = 'opacity 0.3s';
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function getQRCanvas() {
+            return document.querySelector('#qrcode canvas');
+        }
+
+        function ensureQRAvailable() {
+            const canvas = getQRCanvas();
+            if (!canvas) {
+                showNotification('Generate a QR code first.', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        function ensureShareableContent(requireUrl = false) {
+            if (!window.currentQRContent) {
+                showNotification('Generate a QR code first.', 'error');
+                return null;
+            }
+
+            if (requireUrl && !window.currentQRIsUrl) {
+                showNotification('Links are only available for Smart Codes. Share the image instead.', 'error');
+                return null;
+            }
+
+            return window.currentQRContent;
+        }
+
+        function canShareFiles() {
+            if (!navigator.share || !navigator.canShare || typeof File === 'undefined') return false;
+            try {
+                const file = new File([''], 'test.png', { type: 'image/png' });
+                return navigator.canShare({ files: [file] });
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function isMobile() {
+            return /android|iphone|ipad|ipod/i.test(navigator.userAgent || '');
+        }
+
+        function showShareModal() {
+            if (!ensureQRAvailable()) return;
+            const modal = document.getElementById('shareModal');
+            if (!modal) return;
+
+            const nativeShareOption = document.getElementById('nativeShareOption');
+            if (nativeShareOption) {
+                nativeShareOption.style.display = canShareFiles() ? 'flex' : 'none';
+            }
+
+            const smsOption = document.getElementById('smsOption');
+            if (smsOption) {
+                if (!window.currentQRIsUrl) {
+                    smsOption.style.display = 'none';
+                } else {
+                    smsOption.style.display = isMobile() ? 'flex' : 'none';
+                }
+            }
+
+            const copyLinkOption = document.getElementById('copyLinkOption');
+            if (copyLinkOption) {
+                copyLinkOption.style.display = window.currentQRIsUrl ? 'flex' : 'none';
+            }
+
+            const emailOption = document.getElementById('emailOption');
+            if (emailOption) {
+                emailOption.style.display = 'flex';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        window.closeShareModal = closeShareModal;
+
+        function getShareMessage() {
+            if (!window.currentQRContent) return '';
+            if (window.currentQRIsUrl) {
+                return `Scan my QR code to view my information: ${window.currentQRContent}`;
+            }
+            return "I've attached my personal QR code. Scan it to view my information.";
+        }
+
+        async function shareQRImage() {
+            if (!ensureQRAvailable()) return false;
+            const canvas = getQRCanvas();
+            let blob;
+            try {
+                blob = await new Promise((resolve, reject) => {
+                    canvas.toBlob((result) => {
+                        if (result) resolve(result);
+                        else reject(new Error('Blob conversion failed'));
+                    }, 'image/png');
+                });
+            } catch (error) {
+                console.error('Unable to create QR blob:', error);
+                showNotification('Unable to prepare the QR image. Try downloading instead.', 'error');
+                return false;
+            }
+
+            const file = new File([blob], 'my-qr-code.png', { type: 'image/png' });
+
+            if (canShareFiles()) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'My Personal QR Code',
+                        text: 'Scan this QR code to view my information'
+                    });
+                    return true;
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        return false;
+                    }
+                    console.error('Share failed:', err);
+                    showNotification('Sharing failed. Try another option.', 'error');
+                    showShareModal();
+                    return false;
+                }
+            }
+
+            showShareModal();
+            return false;
+        }
+
+        async function copyImageToClipboard() {
+            if (!ensureQRAvailable()) return false;
+            if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
+                showNotification('Copying images is not supported in this browser. Use Download instead.', 'error');
+                return false;
+            }
+
+            const canvas = getQRCanvas();
+            try {
+                const blob = await new Promise((resolve, reject) => {
+                    canvas.toBlob((result) => {
+                        if (result) resolve(result);
+                        else reject(new Error('Blob conversion failed'));
+                    }, 'image/png');
+                });
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                showNotification('✓ QR code image copied! Paste it anywhere.', 'success');
+                return true;
+            } catch (error) {
+                console.error('Copy failed:', error);
+                showNotification('❌ Copy failed. Use Download instead.', 'error');
+                return false;
+            }
+        }
+
+        function shareViaWhatsAppLink() {
+            if (!window.currentQRIsUrl) {
+                showNotification('Share the QR image instead for this code.', 'info');
+                return false;
+            }
+            if (!ensureShareableContent()) return false;
+            const text = encodeURIComponent(getShareMessage());
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+            return true;
+        }
+
+        async function shareViaWhatsAppImage() {
+            if (!ensureQRAvailable()) return false;
+            if (isMobile() && canShareFiles()) {
+                const success = await shareQRImage();
+                return success;
+            }
+            return shareViaWhatsAppLink();
+        }
+
+        async function shareViaTelegramImage() {
+            if (!ensureQRAvailable()) return false;
+            if (navigator.share && canShareFiles()) {
+                const success = await shareQRImage();
+                return success;
+            }
+            showNotification('Download the QR image, then upload it to Telegram manually.', 'info');
+            return false;
+        }
+
+        function shareViaSMS() {
+            if (!window.currentQRIsUrl) {
+                showNotification('Share the QR image or create a Smart Code link instead.', 'info');
+                return false;
+            }
+            if (!ensureShareableContent(true)) return false;
+            const smsBody = encodeURIComponent(getShareMessage());
+            window.location.href = `sms:?body=${smsBody}`;
+            return true;
+        }
+
+        function shareViaEmailWithImage() {
+            if (!ensureQRAvailable()) return false;
+            const content = window.currentQRContent;
+            const bodyText = window.currentQRIsUrl
+                ? "I've attached my personal QR code. You can also open it here: " + content
+                : "I've attached my personal QR code. Scan it to view my information.";
+            downloadQR();
+            setTimeout(() => {
+                const subject = encodeURIComponent('My Personal QR Code');
+                const body = encodeURIComponent(bodyText);
+                window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            }, 500);
+            return true;
+        }
+
+        async function copyShareLink() {
+            const content = ensureShareableContent(true);
+            if (!content) return false;
+            if (!navigator.clipboard) {
+                showNotification('Clipboard access is not available. Copy the link manually.', 'error');
+                return false;
+            }
+            try {
+                await navigator.clipboard.writeText(content);
+                showNotification('QR link copied to clipboard!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Copy link failed:', error);
+                showNotification('Unable to copy link. Try again or share the image.', 'error');
+                return false;
+            }
         }
 
         function setHeroDefault() {
@@ -2018,29 +2439,7 @@
             closePasswordModal();
             renderFields();
             
-            // Success notification
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 24px;
-                background: #E8F5E9;
-                color: #27AE60;
-                padding: 16px 24px;
-                border-radius: 12px;
-                border: 2px solid #27AE60;
-                font-weight: 600;
-                z-index: 10001;
-                box-shadow: var(--shadow-lg);
-            `;
-            notification.textContent = '✓ Password set successfully';
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.transition = 'opacity 0.3s';
-                notification.style.opacity = '0';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
+            showNotification('✓ Password set successfully', 'success');
         }
 
         async function generateQR() {
@@ -2152,6 +2551,7 @@
             output.classList.remove('hidden');
             output.scrollIntoView({ behavior: 'smooth' });
             window.currentQRContent = content;
+            window.currentQRIsUrl = isUrl;
         }
 
         function formatPlainTextValue(field) {
@@ -2179,7 +2579,7 @@
             if (!canvas) return;
             const url = canvas.toDataURL('image/png');
             const link = document.createElement('a');
-            link.download = 'qr-code.png';
+            link.download = 'my-qr-code.png';
             link.href = url;
             link.click();
         }
